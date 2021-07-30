@@ -52,10 +52,10 @@ def train_agent(env: CarRacing, render: bool=False, path_to_model: str=None, **k
             num_steps += 1
 
 
-        if episode_index % update_frequency == 0:
+        if episode_index % update_frequency == 0 and episode_index != 0:
             agent.update_target_weights()
 
-        if episode_index % save_frequency == 0:
+        if episode_index % save_frequency == 0 and episode_index != 0:
             agent.save_checkpoint(checkpoint_directory, episode_index=episode_index)
 
         
