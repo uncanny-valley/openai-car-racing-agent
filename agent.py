@@ -21,7 +21,7 @@ class Agent:
     def __init__(self, env: CarRacing, **kwargs):
         self._env = env
         self._discount_factor = kwargs.get('discount_factor')
-        self._epsilon         = kwargs.get('epsilon')
+        self._epsilon         = kwargs.get('initial_epsilon')
         self._epsilon_min     = kwargs.get('epsilon_min')
         self._epsilon_decay   = kwargs.get('epsilon_decay')
         self._learning_rate   = kwargs.get('learning_rate')
@@ -60,7 +60,7 @@ class Agent:
         if np.random.rand() <= self._epsilon:
             return self._env.action_space.sample()
         else:
-            state_tensor = tf.convert_to_tensor(state, dtype=np.float64)
+            state_tensor = tf.convert_to_tensor(np.expand_dims(state, axis=0), dtype=np.float64)
             logits = self._model(state_tensor)
             return tf.argmax(logits[0]).numpy()
 
@@ -82,10 +82,14 @@ class Agent:
         targets = reward_samples + self._discount_factor * tf.reduce_max(future_reward_samples, axis=1)
 
         # If observation is terminal, set the value to its reward, disregarding future rewards
-        targets[terminal_samples] = reward_samples[terminal_samples]
+        if any(len(terminal_samples)):
+            targets = targets.numpy()
+            terminal_mask = terminal_samples.astype(bool)
+            targets[terminal_mask] = rewards[terminal_mask]
+            targets = tf.convert_to_tensor(targets)
 
         # Create mask for only the agent-selected actions
-        masks = tf.one_hot(action_samples, self._env.action_sample.n)
+        masks = tf.one_hot(action_samples, self._env.action_space.n)
 
         with tf.GradientTape() as tape:
             q_values = self._model(state_samples, training=True)
