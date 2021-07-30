@@ -31,8 +31,8 @@ class Agent:
         self.name = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
 
     def save_checkpoint(self, checkpoint_directory: str, episode_index: int):
-        path = os.path.join(checkpoints_directory, f'{self.name}-episode-{episode_index}')
-        self._target_model.save_weights(path)
+        path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}')
+        self._model_target.save_weights(path)
 
     def load_model(self, path_to_model: str):
         self._model.load_weights(path_to_model)
@@ -53,12 +53,12 @@ class Agent:
         return model
 
     def act(self, state: npt.NDArray[np.float64]) -> np.uint8:
-        return env.action_space.sample()
+        return self._env.action_space.sample()
 
     def learn(self):
         # If enough transitions in experience replay, randomly sample minibatch of transitions
         if len(self.replay_memory) >= self._minibatch_size:
-            batch = self.replay_memory.sample(self._minibatch_size)
+            batch = self.replay_memory.sample_minibatch(batch_size=self._minibatch_size)
             state_samples, action_samples, reward_samples, terminal_samples, next_state_samples = batch
 
             state_action_values = self._model.predict(state)
@@ -68,5 +68,5 @@ class Agent:
             print('future_rewards:', future_rewards.shape)
 
     def update_target_weights(self):
-        self._target_model.set_weights(self._model.get_weights())
+        self._model_target.set_weights(self._model.get_weights())
 

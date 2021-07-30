@@ -39,13 +39,15 @@ def train_agent(env: CarRacing, render: bool=False, path_to_model: str=None, **k
             next_state = normalize_state(next_state)
 
             # Store transition (s, a, r, s', done) in experience replay memory
-            agent.replay_memory.add(current_state.copy(), action, reward, next_state.copy(), done)
+            agent.replay_memory.add_transition(current_state.copy(), action, reward, next_state.copy(), done)
 
             current_state = next_state
 
             if done:
-                print('Episode {episode}: total_reward={total_reward}, epsilon={agent._epsilon}, num_steps={num_steps}')
+                print(f'Episode {episode_index}: total_reward={total_reward}, epsilon={agent._epsilon}, num_steps={num_steps}')
                 break
+
+            agent.learn()
 
             num_steps += 1
 
@@ -54,7 +56,7 @@ def train_agent(env: CarRacing, render: bool=False, path_to_model: str=None, **k
             agent.update_target_weights()
 
         if episode_index % save_frequency == 0:
-            agent.save_checkpoint(checkpoint_directory)
+            agent.save_checkpoint(checkpoint_directory, episode_index=episode_index)
 
         
 
@@ -90,11 +92,12 @@ def main():
         'epsilon_decay': args.epsilon_decay,
         'num_episodes': args.num_episodes,
         'replay_buffer_size': args.replay_buffer_size,
+        'minibatch_size': args.minibatch_size,
         'discount_factor': args.discount_factor,
         'learning_rate': args.learning_rate,
         'update_frequency': args.update_frequency,
         'save_frequency': 50,
-        'checkpoints_directory': './checkpoint'
+        'checkpoint_directory': './checkpoint'
     }
 
     train_agent(env, render=args.render, path_to_model=args.model, **hyperparameters)
