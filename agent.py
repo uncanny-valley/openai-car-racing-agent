@@ -82,7 +82,7 @@ class Agent:
         targets = reward_samples + self._discount_factor * tf.reduce_max(future_reward_samples, axis=1)
 
         # If observation is terminal, set the value to its reward, disregarding future rewards
-        if any(len(terminal_samples)):
+        if any(terminal_samples):
             targets = targets.numpy()
             terminal_mask = terminal_samples.astype(bool)
             targets[terminal_mask] = rewards[terminal_mask]
