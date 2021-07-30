@@ -97,7 +97,8 @@ def main():
         'learning_rate': args.learning_rate,
         'update_frequency': args.update_frequency,
         'save_frequency': 50,
-        'checkpoint_directory': './checkpoint'
+        'checkpoint_directory': './checkpoint',
+        'log_directory': './log',
     }
 
     train_agent(env, render=args.render, path_to_model=args.model, **hyperparameters)

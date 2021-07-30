@@ -8,8 +8,10 @@ from gym.envs.box2d import CarRacing
 
 import tensorflow as tf
 from tensorflow.keras import Model
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.layers import Conv2D, Dense, Flatten, Input, MaxPooling2D 
 from tensorflow.keras.losses import MeanSquaredError
+from tensorflow.keras.metrics import Mean as MeanMetric, MeanSquaredError as MSEMetric
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 
@@ -32,8 +34,17 @@ class Agent:
         self._optimizer       = Adam(learning_rate=self._learning_rate, clipnorm=1.0)
         self._loss_func       = MeanSquaredError(reduction='auto', name='mean_squared_error')
 
-        self.replay_memory    = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
-        self.name             = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
+        # Metrics 
+        self._train_loss          = MeanMetric('train_loss', dtype=tf.float32)
+        self._train_accuracy      = MSEMetric('train_accuracy', dtype=tf.float32)
+
+        self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
+        self.name                  = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
+        self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name, 'train')
+        self._train_summary_writer = tf.summary.create_file_writer(self.log_dir)
+
+        self.epoch_index = 0
+
 
     def save_checkpoint(self, checkpoint_directory: str, episode_index: int):
         path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}')
@@ -85,7 +96,7 @@ class Agent:
         if any(terminal_samples):
             targets = targets.numpy()
             terminal_mask = terminal_samples.astype(bool)
-            targets[terminal_mask] = rewards[terminal_mask]
+            targets[terminal_mask] = reward_samples[terminal_mask]
             targets = tf.convert_to_tensor(targets)
 
         # Create mask for only the agent-selected actions
@@ -103,11 +114,22 @@ class Agent:
             # Compute mean squared error
             loss = self._loss_func(targets, q_action)
 
-
         # Backpropagation
         grads = tape.gradient(loss, self._model.trainable_variables)
         self._optimizer.apply_gradients(zip(grads, self._model.trainable_variables))
-            
+
+        # Log metrics            
+        self._train_loss(loss)
+        self._train_accuracy(targets, q_action)
+
+        with self._train_summary_writer.as_default():
+            tf.summary.scalar('loss', self._train_loss.result(), step=epoch_index)
+            tf.summary.scalar('accuracy', self._train_accuracy.result(), step=epoch_index)
+
+        self._train_loss.reset_states()
+        self._train_accuracy.reset_states()
+        self.epoch_index += 1
+
         self._decay_epsilon()
 
     def update_target_weights(self):
