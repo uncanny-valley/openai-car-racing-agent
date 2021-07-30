@@ -47,7 +47,7 @@ def train_agent(env: CarRacing, render: bool=False, path_to_model: str=None, **k
                 print(f'Episode {episode_index}: total_reward={total_reward}, epsilon={agent._epsilon}, num_steps={num_steps}')
                 break
 
-            agent.learn()
+            agent.maybe_learn()
 
             num_steps += 1
 
