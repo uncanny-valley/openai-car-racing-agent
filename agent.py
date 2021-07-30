@@ -36,11 +36,10 @@ class Agent:
 
         # Metrics 
         self._train_loss          = MeanMetric('train_loss', dtype=tf.float32)
-        self._train_accuracy      = MSEMetric('train_accuracy', dtype=tf.float32)
 
         self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
         self.name                  = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
-        self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name, 'train')
+        self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name)
         self._train_summary_writer = tf.summary.create_file_writer(self.log_dir)
 
         self.epoch_index = 0
@@ -75,9 +74,13 @@ class Agent:
             logits = self._model(state_tensor)
             return tf.argmax(logits[0]).numpy()
 
+    def log(self, values: dict, step: int):
+        with self._train_summary_writer.as_default():
+            for name, value in values.items():
+                tf.summary.scalar(name, value, step=step)
+
     def _decay_epsilon(self):
-        if self._epsilon > self._epsilon_min:
-            self._epsilon *= self._epsilon_decay
+        self._epsilon = max(self._epsilon * self._epsilon_decay, self._epsilon_min)
 
     def maybe_learn(self):
         # If enough transitions in experience replay, randomly sample minibatch of transitions
@@ -120,14 +123,13 @@ class Agent:
 
         # Log metrics            
         self._train_loss(loss)
-        self._train_accuracy(targets, q_action)
 
         with self._train_summary_writer.as_default():
-            tf.summary.scalar('loss', self._train_loss.result(), step=epoch_index)
-            tf.summary.scalar('accuracy', self._train_accuracy.result(), step=epoch_index)
+            tf.summary.scalar('loss', self._train_loss.result(), step=self.epoch_index)
+            tf.summary.scalar('epsilon', self._epsilon, step=self.epoch_index)
+            tf.summary.scalar('average_batch_reward', np.mean(reward_samples), step=self.epoch_index)
 
         self._train_loss.reset_states()
-        self._train_accuracy.reset_states()
         self.epoch_index += 1
 
         self._decay_epsilon()
