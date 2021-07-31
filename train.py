@@ -44,8 +44,8 @@ def train_agent(env: CarRacing, render: bool=False, path_to_model: str=None, **k
             current_state = next_state
 
             if done:
-                print(f'Epoch={agent.epoch_index}, Episode=(total_reward={total_reward}, epsilon={agent._epsilon}, episode_steps={num_steps})')
-                agent.log(values=dict(total_reward=total_reward), step=episode_index)
+                print(f'Agent {agent.name}, Epoch={agent.epoch_index}, Episode=(index={index}, total_reward={total_reward}, epsilon={agent._epsilon}, episode_steps={num_steps})')
+                agent.log(values=dict(total_reward=total_reward, steps_per_episode=num_steps), step=episode_index)
                 break
 
             agent.maybe_learn()
