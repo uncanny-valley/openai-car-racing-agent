@@ -34,7 +34,6 @@ class Agent:
         self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name)
         self._train_summary_writer = tf.summary.create_file_writer(self.log_dir)
 
-        # Size 
         self._training_losses_in_epoch = []
 
     def build_network(self):
@@ -54,7 +53,7 @@ class Agent:
     def update_target_weights(self):
         self._network.update_target_weights()
 
-    def save_checkpoint():
+    def save_checkpoint(self, checkpoint_directory, episode_index: int):
         path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}.h5')
         self._network.save_checkpoint(path)
 
