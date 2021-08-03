@@ -75,7 +75,7 @@ class Experiment:
             remaining_steps -= num_steps_in_episode
 
         self._agent.log_average_loss(epoch_index)
-        self._agent.log(values=dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward), mean_episodic_reward_in_epoch=mean_episodic_reward, step=epoch_index)
+        self._agent.log(values=dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward, mean_episodic_reward_in_epoch=mean_episodic_reward), step=epoch_index)
 
         if not self._target_model_update_by_episodes and (epoch_index + 1) % self._target_model_update_frequency == 0:
             self._agent.update_target_weights()
