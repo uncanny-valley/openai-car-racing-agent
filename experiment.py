@@ -30,7 +30,7 @@ class Experiment:
         self._checkpoint_directory = checkpoint_directory
 
 
-    def step(self, action: int) -> Tuple[np.float64, bool]:
+    def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
         reward = 0
         for _ in range(self._frames_to_skip):
             next_state, r, done, _ = self._env.step(action)
@@ -109,7 +109,7 @@ class Experiment:
 
             if done or (episodic_step_index + 1) >= max_steps:
                 logging.info(f'Agent {self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, step=episode_index))
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
                 break
 
             episodic_step_index += 1
@@ -143,7 +143,7 @@ class Experiment:
 
             if done or (episodic_step_index + 1) >= max_steps:
                 logging.info(f'Agent {self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}), terminated={done})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, step=episode_index))
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
                 break
 
             episodic_step_index += 1

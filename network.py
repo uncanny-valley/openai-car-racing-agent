@@ -16,11 +16,20 @@ class DeepQNet:
         self._discount_factor = discount_factor
         self._loss_function   = loss_function
         self._optimizer       = optimizer
+        self._num_actions     = output_num
 
         self._model           = self.initialize_model(input_shape, output_num)
         self._model_target    = self.initialize_model(input_shape, output_num)
 
-        self.epoch_index      = 0
+    def update_target_weights(self):
+        self._model_target.set_weights(self._model.get_weights())  
+    
+    def load_model(self, path_to_model: str):
+        self._model.load_weights(path_to_model)
+        self.update_target_weights()
+    
+    def save_model(self, path: str):
+        self._model_target.save_weights(path)
 
     def initialize_model(self, input_shape: Tuple, output_num: int) -> Model:
         visible = Input(shape=input_shape)
@@ -62,7 +71,7 @@ class DeepQNet:
             targets = tf.convert_to_tensor(targets)
 
         # Create mask for only the agent-selected actions
-        masks = tf.one_hot(action_samples, self._env.action_space.n)
+        masks = tf.one_hot(action_samples, self._num_actions)
 
         with tf.GradientTape() as tape:
             q_values = self._model(state_samples, training=True)

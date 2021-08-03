@@ -52,15 +52,14 @@ class Agent:
             self.learn()
 
     def update_target_weights(self):
-        self._model_target.set_weights(self._model.get_weights())  
+        self._network.update_target_weights()
 
     def save_checkpoint():
         path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}.h5')
-        self._model_target.save_weights(path)
+        self._network.save_checkpoint(path)
 
     def load_model(self, path_to_model: str):
-        self._model.load_weights(path_to_model)
-        self._update_target_weights()
+        self._network.load_model(path_to_model)
 
     def log(self, values: dict, step: int):
         with self._train_summary_writer.as_default():

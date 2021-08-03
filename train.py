@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import numpy as np
 import gym
 from gym.envs.box2d import CarRacing, CarRacingV1
@@ -145,6 +146,7 @@ display.start()
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser()
     parser.add_argument('--env', type=int, default=1, help='Either CarRacing-v0 or CarRacing-v1 OpenAI gym environment')
     parser.add_argument('--rng', type=int, default=0, help='Random seed to reproduce agent stochasticity')
