@@ -9,7 +9,9 @@ from preprocessing import SubframeQueue, normalize_state
 
 
 class Experiment:
-    def __init__(self, env: gym.Env, env_version: str, agent: Agent, render:bool, num_epochs: int, num_steps_per_epoch: int, frames_to_skip: int, phi_length: int):
+    def __init__(self, env: gym.Env, env_version: str, agent: Agent, render:bool, num_epochs: int, num_steps_per_epoch: int,
+                 frames_to_skip: int, phi_length: int, target_model_update_frequency: int, model_save_frequency: int,
+                 target_model_update_by_episodes: int, checkpoint_directory: str):
         self._agent = agent
         self._env   = env
         self._env_version = env_version 
@@ -21,6 +23,11 @@ class Experiment:
         self._num_steps_per_epoch = num_steps_per_epoch
 
         self._total_episodes = 0
+
+        self._target_model_update_frequency = target_model_update_frequency
+        self._model_save_frequency = model_save_frequency
+        self._target_model_update_by_episodes = target_model_update_by_episodes
+        self._checkpoint_directory = checkpoint_directory
 
 
     def step(self, action: int) -> Tuple[np.float64, bool]:
@@ -45,7 +52,7 @@ class Experiment:
         total_reward = 0.
         mean_episodic_reward = 0.
 
-        logging.info(f'Training epoch: {epoch_index}, total_episodes: {self._total_episodes}')
+        logging.info(f'Starting training epoch: {epoch_index}, total_episodes: {self._total_episodes}')
 
         while remaining_steps > 0:
             if self._env_version == 0:
@@ -55,6 +62,12 @@ class Experiment:
 
             episode_index += 1
 
+            if episode_index % self._model_save_frequency == 0:
+                self._agent.save_checkpoint(self._checkpoint_directory, episode_index=episode_index)
+
+            if self._target_model_update_by_episodes and episode_index % self._target_model_update_frequency == 0:
+                self._agent.update_target_weights()
+
             total_reward += total_episodic_reward
             mean_episodic_reward = mean_episodic_reward + (total_episodic_reward - mean_episodic_reward) / episode_index
             self._total_episodes += 1
@@ -63,8 +76,11 @@ class Experiment:
         self._agent.log_average_loss(epoch_index)
         self._agent.log(values=dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward), step=epoch_index)
 
+        if not self._target_model_update_by_episodes and (epoch_index + 1) % self._target_model_update_frequency == 0:
+            self._agent.update_target_weights()
 
-    def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[bool, int]:
+
+    def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
         current_state = self._env.reset()
 
         # Initialize a sub-frame queue to handle overlapping consecutive frames
@@ -100,10 +116,10 @@ class Experiment:
 
             self._agent.maybe_learn()
 
-        return done, episodic_step_index + 1
+        return total_episodic_reward, episodic_step_index + 1
         
 
-    def run_episode_v1(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[bool, np.float64, int]:
+    def run_episode_v1(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
         current_state = normalize_state(self._env.reset())
         total_episodic_reward = 0.
         episodic_step_index = 0

@@ -149,7 +149,7 @@ def main():
     parser.add_argument('--env', type=int, default=1, help='Either CarRacing-v0 or CarRacing-v1 OpenAI gym environment')
     parser.add_argument('--rng', type=int, default=0, help='Random seed to reproduce agent stochasticity')
     parser.add_argument('-m', '--model', type=str, help='Path to load an existing model')
-    parser.add_argument('-n', '--num_epochs', type=int, default=200, help='The number of epoch with which to train the agent')
+    parser.add_argument('-n', '--num_epochs', type=int, default=300, help='The number of epoch with which to train the agent')
     parser.add_argument('--steps_per_epoch', type=int, default=5000, help='The number of steps per epoch with which to train the agent')
     parser.add_argument('-r', '--render', action='store_true', help='Whether to render the animated display')
     parser.add_argument('-e', '--epsilon', type=np.float32, default=1., help='Initial epsilon for the agent')
@@ -205,7 +205,9 @@ def main():
     if args.model is not None:
         agent.load_model(args.model)
 
-    experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length, num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch)
+    experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length,
+                            num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch, target_model_update_frequency=args.update_frequency,
+                            model_save_frequency=hyperparameters['save_frequency'], target_model_update_by_episodes=args.update_by_episodes, checkpoint_directory=hyperparameters['checkpoint_directory'])
     experiment.run()
 
     env.close()
