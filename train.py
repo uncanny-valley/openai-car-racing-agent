@@ -165,11 +165,14 @@ def main():
     parser.add_argument('--epsilon-decay', type=np.float32, default=0.9999, help='The proportion by which to scale the current epsilon down [0, 1]')
     parser.add_argument('-u', '--update-frequency', type=np.int64, default=2, help='How often to update the target model\'s weights in epochs')
     parser.add_argument('--update-by-episodes', action='store_true', help='Whether the specified update frequency is in episodes rather than total frames')
+    parser.add_argument('--initial-epoch', type=int, default=0, help='The starting epoch')
+    parser.add_argument('--initial-episode', type=int, default=0, help='The starting episode if we are running an existing model')
     args = parser.parse_args()
 
     # Default hyperparameters
     hyperparameters = {
         'initial_epsilon': args.epsilon,
+        'model': args.model,
         'epsilon_min': args.epsilon_min,
         'epsilon_decay': args.epsilon_decay,
         'rng': args.rng,
@@ -209,6 +212,7 @@ def main():
 
     experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length,
                             num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch, target_model_update_frequency=args.update_frequency,
+                            initial_epoch=args.initial_epoch, initial_episode=args.initial_episode,
                             model_save_frequency=hyperparameters['save_frequency'], target_model_update_by_episodes=args.update_by_episodes, checkpoint_directory=hyperparameters['checkpoint_directory'])
     experiment.run()
 

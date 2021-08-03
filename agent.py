@@ -1,6 +1,7 @@
 
 import datetime
 import gym
+import ntpath
 import numpy as np
 import numpy.typing as npt
 import os
@@ -30,7 +31,13 @@ class Agent:
         self._minibatch_size       = kwargs.get('minibatch_size')
         self._network              = self.build_network(**kwargs)
         self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
-        self.name                  = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
+
+        # Using an existing model
+        if kwargs.get('model') is not None:
+            self.name = ntpath.baseline(kwargs.get('model'))
+        else:
+            self.name = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
+
         self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name)
         self._train_summary_writer = tf.summary.create_file_writer(self.log_dir)
 
@@ -55,7 +62,7 @@ class Agent:
 
     def save_checkpoint(self, checkpoint_directory, episode_index: int):
         path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}.h5')
-        self._network.save_checkpoint(path)
+        self._network.save_model(path)
 
     def load_model(self, path_to_model: str):
         self._network.load_model(path_to_model)

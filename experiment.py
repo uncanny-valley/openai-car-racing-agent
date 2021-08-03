@@ -11,7 +11,7 @@ from preprocessing import SubframeQueue, normalize_state
 class Experiment:
     def __init__(self, env: gym.Env, env_version: str, agent: Agent, render:bool, num_epochs: int, num_steps_per_epoch: int,
                  frames_to_skip: int, phi_length: int, target_model_update_frequency: int, model_save_frequency: int,
-                 target_model_update_by_episodes: int, checkpoint_directory: str):
+                 target_model_update_by_episodes: int, checkpoint_directory: str, initial_epoch: int=0, initial_episode: int=0):
         self._agent = agent
         self._env   = env
         self._env_version = env_version 
@@ -19,10 +19,11 @@ class Experiment:
         self._render = render
         self._frames_to_skip = frames_to_skip
         self._phi_length = phi_length
+        self._initial_epoch = initial_epoch
         self._num_epochs = num_epochs
         self._num_steps_per_epoch = num_steps_per_epoch
 
-        self._total_episodes = 0
+        self._total_episodes = initial_episode
 
         self._target_model_update_frequency = target_model_update_frequency
         self._model_save_frequency = model_save_frequency
@@ -43,7 +44,7 @@ class Experiment:
 
 
     def run(self):
-        for epoch_index in range(self._num_epochs):
+        for epoch_index in range(self._initial_epoch, self._num_epochs):
             self.run_epoch(epoch_index, self._num_steps_per_epoch)
 
     def run_epoch(self, epoch_index: int, num_steps: int):
