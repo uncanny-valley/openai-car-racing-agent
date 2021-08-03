@@ -61,16 +61,16 @@ class Experiment:
                 total_episodic_reward, num_steps_in_episode = self.run_episode_v1(epoch_index, episode_index, remaining_steps)
 
             episode_index += 1
+            self._total_episodes += 1
 
-            if episode_index % self._model_save_frequency == 0:
-                self._agent.save_checkpoint(self._checkpoint_directory, episode_index=episode_index)
+            if self._total_episodes % self._model_save_frequency == 0:
+                self._agent.save_checkpoint(self._checkpoint_directory, episode_index=self._total_episodes)
 
-            if self._target_model_update_by_episodes and episode_index % self._target_model_update_frequency == 0:
+            if self._target_model_update_by_episodes and self._total_episodes % self._target_model_update_frequency == 0:
                 self._agent.update_target_weights()
 
             total_reward += total_episodic_reward
             mean_episodic_reward = mean_episodic_reward + (total_episodic_reward - mean_episodic_reward) / episode_index
-            self._total_episodes += 1
             remaining_steps -= num_steps_in_episode
 
         self._agent.log_average_loss(epoch_index)
@@ -109,7 +109,7 @@ class Experiment:
 
             if done or (episodic_step_index + 1) >= max_steps:
                 logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=self._total_episodes)
                 break
 
             episodic_step_index += 1
@@ -143,7 +143,7 @@ class Experiment:
 
             if done or (episodic_step_index + 1) >= max_steps:
                 logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}), terminated={done},  steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=self._total_episodes)
                 break
 
             episodic_step_index += 1

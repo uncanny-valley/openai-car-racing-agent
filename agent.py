@@ -68,7 +68,7 @@ class Agent:
 
     def log_average_loss(self, epoch_index: int):
         average_training_loss = np.mean(self._training_losses_in_epoch)
-        self.log(average_training_loss=average_training_loss, step=epoch_index)
+        self.log(dict(average_training_loss=average_training_loss), step=epoch_index)
 
     def _decay_epsilon(self):
         self._epsilon = max(self._epsilon * self._epsilon_decay, self._epsilon_min)
