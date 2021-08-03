@@ -37,13 +37,13 @@ class Agent:
         model_path = kwargs.get('model')
         if model_path is not None:
             model_name = ntpath.basename(model_path)
-            filename, _ = os.path.splitext(model_path)
+            filename, _ = os.path.splitext(model_name)
             match = re.match(r'(agent-\d+-\d+-\d+-\d+-\d+)-episode-\d+', filename)
 
             if match is None:
                 raise ValueError(f'Given model path {model_path} contains filename that does not follow the pattern agent-%Y-%m-%d-%H-%M-episode-i. Failed to extract model name.')
             else:
-                self.name = match[0]
+                self.name = match[1]
         else:
             self.name = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
 
