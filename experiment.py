@@ -97,7 +97,7 @@ class Experiment:
             current_state_subframes = subframe_queue.to_numpy()
             action = self._agent.act(current_state_subframes)
 
-            next_state, reward, done, _ = self.step(action)
+            next_state, reward, done = self.step(action)
 
             total_episodic_reward += reward
             
@@ -105,10 +105,10 @@ class Experiment:
             next_state_subframes = subframe_queue.to_numpy()
 
             # Store transition (s, a, r, s', done) in experience replay memory
-            self._agent.replay_memory.add_transition(current_state_subframes, action, reward, next_state_subframes, done)
+            self._agent.replay_memory.add_transition(current_state_subframes, self._agent.action_space.index(action), reward, next_state_subframes, done)
 
             if done or (episodic_step_index + 1) >= max_steps:
-                logging.info(f'Agent {self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1})')
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, terminated={done}, steps_remaining_in_epoch={max_steps})')
                 self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
                 break
 
@@ -130,7 +130,7 @@ class Experiment:
 
             # Agent takes an action, a, from state and observes reward and next state s'
             action = self._agent.act(current_state)
-            next_state, reward, done, _ = self.step(action)
+            next_state, reward, done = self.step(action)
 
             total_episodic_reward += reward
 
@@ -142,7 +142,7 @@ class Experiment:
             current_state = next_state
 
             if done or (episodic_step_index + 1) >= max_steps:
-                logging.info(f'Agent {self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}), terminated={done})')
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}), terminated={done}, steps_remaining_in_epoch={max_steps})')
                 self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=episode_index)
                 break
 

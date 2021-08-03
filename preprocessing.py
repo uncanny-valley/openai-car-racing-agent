@@ -2,7 +2,7 @@
 from collections import deque
 import numpy as np
 import numpy.typing as npt
-
+from typing import List
 
 
 def normalize_state(state: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -16,7 +16,7 @@ def process_rgb(state: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
 class SubframeQueue:
-    def __init__(self, subframes=[], size=3):
+    def __init__(self, subframes: List[npt.NDArray[np.float64]]=[], size: int=3):
         self._queue = deque([process_rgb(f) for f in subframes], maxlen=size)   
 
     def add(self, subframe: npt.NDArray[np.float64]):

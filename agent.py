@@ -104,7 +104,7 @@ class CarRacingV1Agent(Agent):
 
 class CarRacingV0Agent(Agent):
     def __init__(self, env: CarRacingV1, **kwargs):
-        self._action_space = [
+        self.action_space = [
             (-1, 1, 0.2), (0, 1, 0.2), (1, 1, 0.2),
             (-1, 1,   0), (0, 1,   0), (1, 1,   0),
             (-1, 0, 0.2), (0, 0, 0.2), (1, 0, 0.2),
@@ -116,19 +116,19 @@ class CarRacingV0Agent(Agent):
 
     def build_network(self, **kwargs):
         return DeepQNet(
-            input_shape=self._env.observation_space.shape,
-            output_num=len(self._action_space),
+            input_shape=(self._env.observation_space.shape[0], self._env.observation_space.shape[1], kwargs.get('phi_length')),
+            output_num=len(self.action_space),
             discount_factor=kwargs.get('discount_factor'),
             loss_function=kwargs.get('loss_function'),
             optimizer=kwargs.get('optimizer'))
 
     def act(self, state: npt.NDArray[np.float64]) -> np.uint8:
         if self._rng.rand() <= self._epsilon:
-            action_index = randrange(len(self._action_space))
+            action_index = randrange(len(self.action_space))
         else:
             action_index = self._network.predict_action(state)
 
-        return self._action_space[action_index]
+        return self.action_space[action_index]
 
     def learn(self):
         batch = self.replay_memory.sample_minibatch(batch_size=self._minibatch_size)
