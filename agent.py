@@ -5,6 +5,7 @@ import ntpath
 import numpy as np
 import numpy.typing as npt
 import os
+import re
 
 from gym.envs.box2d import CarRacing, CarRacingV1
 from random import randrange
@@ -24,7 +25,7 @@ class Agent:
         self._env = env
         self._rng = np.random.RandomState(kwargs.get('rng'))
 
-        self._discount_factor = kwargs.get('discount_factor')
+        self._discount_factor      = kwargs.get('discount_factor')
         self._epsilon              = kwargs.get('initial_epsilon')
         self._epsilon_min          = kwargs.get('epsilon_min')
         self._epsilon_decay        = kwargs.get('epsilon_decay')
@@ -33,8 +34,16 @@ class Agent:
         self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
 
         # Using an existing model
-        if kwargs.get('model') is not None:
-            self.name = ntpath.baseline(kwargs.get('model'))
+        model_path = kwargs.get('model')
+        if model_path is not None:
+            model_name = ntpath.basename(model_path)
+            filename, _ = os.path.splitext(model_path)
+            match = re.match(r'(agent-\d+-\d+-\d+-\d+-\d+)-episode-\d+', filename)
+
+            if match is None:
+                raise ValueError(f'Given model path {model_path} contains filename that does not follow the pattern agent-%Y-%m-%d-%H-%M-episode-i. Failed to extract model name.')
+            else:
+                self.name = match[0]
         else:
             self.name = datetime.datetime.now().strftime('agent-%Y-%m-%d-%H-%M')
 
