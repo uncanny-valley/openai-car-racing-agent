@@ -164,7 +164,8 @@ def main():
     parser.add_argument('--epsilon-min', type=np.float32, default=0.1, help='A lower bound for the agent\'s decaying epsilon value')
     parser.add_argument('--epsilon-decay', type=np.float32, default=0.9999, help='The proportion by which to scale the current epsilon down [0, 1]')
     parser.add_argument('-u', '--update-frequency', type=np.int64, default=2, help='How often to update the target model\'s weights in epochs')
-    parser.add_argument('--save-frequency', type=int, default=25, help='How often to save the target model in episodes')
+    parser.add_argument('--save-frequency', type=int, default=25, help='How often to save the target model in epochs')
+    parser.add_argument('--test-frequency', type=int, default=25, help='How often to test the agent on a hold-out set of states, in epochs')
     parser.add_argument('--update-by-episodes', action='store_true', help='Whether the specified update frequency is in episodes rather than total frames')
     parser.add_argument('--initial-epoch', type=int, default=0, help='The starting epoch')
     parser.add_argument('--initial-episode', type=int, default=0, help='The starting episode if we are running an existing model')
@@ -213,7 +214,7 @@ def main():
 
     experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length,
                             num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch, target_model_update_frequency=args.update_frequency,
-                            initial_epoch=args.initial_epoch, initial_episode=args.initial_episode,
+                            initial_epoch=args.initial_epoch, initial_episode=args.initial_episode, model_test_frequency=args.test_frequency,
                             model_save_frequency=args.save_frequency, target_model_update_by_episodes=args.update_by_episodes, checkpoint_directory=hyperparameters['checkpoint_directory'])
     experiment.run()
 

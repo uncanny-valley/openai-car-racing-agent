@@ -38,7 +38,7 @@ class Agent:
         if model_path is not None:
             model_name = ntpath.basename(model_path)
             filename, _ = os.path.splitext(model_name)
-            match = re.match(r'(agent-\d+-\d+-\d+-\d+-\d+)-episode-\d+', filename)
+            match = re.match(r'(agent-\d+-\d+-\d+-\d+-\d+)-epoch-\d+', filename)
 
             if match is None:
                 raise ValueError(f'Given model path {model_path} contains filename that does not follow the pattern agent-%Y-%m-%d-%H-%M-episode-i. Failed to extract model name.')
@@ -55,7 +55,7 @@ class Agent:
     def build_network(self):
         raise NotImplementedError()
 
-    def act(self, state: npt.NDArray[np.float64]) -> np.uint8:
+    def act(self, state: npt.NDArray[np.float64], epsilon_override: np.float64=None) -> np.uint8:
         raise NotImplementedError()   
 
     def learn(self):
@@ -69,8 +69,8 @@ class Agent:
     def update_target_weights(self):
         self._network.update_target_weights()
 
-    def save_checkpoint(self, checkpoint_directory, episode_index: int):
-        path = os.path.join(checkpoint_directory, f'{self.name}-episode-{episode_index}.h5')
+    def save_checkpoint(self, checkpoint_directory, epoch_index: int):
+        path = os.path.join(checkpoint_directory, f'{self.name}-epoch-{epoch_index}.h5')
         self._network.save_model(path)
 
     def load_model(self, path_to_model: str):
@@ -101,8 +101,10 @@ class CarRacingV1Agent(Agent):
             loss_function=kwargs.get('loss_function'),
             optimizer=kwargs.get('optimizer'))
 
-    def act(self, state: npt.NDArray[np.float64]) -> np.uint8:
-        if self._rng.rand() <= self._epsilon:
+    def act(self, state: npt.NDArray[np.float64], epsilon_override: np.float64=None) -> np.uint8:
+        epsilon = epsilon_override if epsilon_override is not None else self._epsilon
+
+        if self._rng.rand() <= epsilon:
             return self._env.action_space.sample()
         else:
             return self._network.predict_action(state)
@@ -137,7 +139,8 @@ class CarRacingV0Agent(Agent):
             loss_function=kwargs.get('loss_function'),
             optimizer=kwargs.get('optimizer'))
 
-    def act(self, state: npt.NDArray[np.float64]) -> np.uint8:
+    def act(self, state: npt.NDArray[np.float64], epsilon_override: np.float64=None) -> np.uint8:
+        epsilon = epsilon_override if epsilon_override is not None else self._epsilon
         if self._rng.rand() <= self._epsilon:
             action_index = randrange(len(self.action_space))
         else:

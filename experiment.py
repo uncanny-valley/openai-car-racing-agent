@@ -2,6 +2,7 @@ import gym
 import logging
 import numpy as np
 import numpy.typing as npt
+from time import time
 from typing import Tuple
 
 from agent import Agent
@@ -11,7 +12,7 @@ from preprocessing import SubframeQueue, normalize_state
 class Experiment:
     def __init__(self, env: gym.Env, env_version: str, agent: Agent, render:bool, num_epochs: int, num_steps_per_epoch: int,
                  frames_to_skip: int, phi_length: int, target_model_update_frequency: int, model_save_frequency: int,
-                 target_model_update_by_episodes: int, checkpoint_directory: str, initial_epoch: int=0, initial_episode: int=0):
+                 model_test_frequency: int, target_model_update_by_episodes: int, checkpoint_directory: str, initial_epoch: int=0, initial_episode: int=0):
         self._agent = agent
         self._env   = env
         self._env_version = env_version 
@@ -27,6 +28,7 @@ class Experiment:
 
         self._target_model_update_frequency = target_model_update_frequency
         self._model_save_frequency = model_save_frequency
+        self._model_test_frequency = model_test_frequency
         self._target_model_update_by_episodes = target_model_update_by_episodes
         self._checkpoint_directory = checkpoint_directory
 
@@ -48,6 +50,7 @@ class Experiment:
             self.run_epoch(epoch_index, self._num_steps_per_epoch)
 
     def run_epoch(self, epoch_index: int, num_steps: int):
+        start_time = time()
         remaining_steps = num_steps
         episode_index = 0
         total_reward = 0.
@@ -64,24 +67,31 @@ class Experiment:
             episode_index += 1
             self._total_episodes += 1
 
-            if self._total_episodes % self._model_save_frequency == 0:
-                self._agent.save_checkpoint(self._checkpoint_directory, episode_index=self._total_episodes)
-
             if self._target_model_update_by_episodes and self._total_episodes % self._target_model_update_frequency == 0:
+                logging.info(f'Updating target model weights based on episodic update frequency: {self._target_model_update_frequency}')
                 self._agent.update_target_weights()
 
             total_reward += total_episodic_reward
             mean_episodic_reward = mean_episodic_reward + (total_episodic_reward - mean_episodic_reward) / episode_index
             remaining_steps -= num_steps_in_episode
 
+        wall_time = time() - start_time
         self._agent.log_average_loss(epoch_index)
-        self._agent.log(values=dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward, mean_episodic_reward_in_epoch=mean_episodic_reward), step=epoch_index)
+        self._agent.log(values=dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward, mean_episodic_reward_in_epoch=mean_episodic_reward, epoch_wall_time=wall_time), step=epoch_index)
 
         if not self._target_model_update_by_episodes and (epoch_index + 1) % self._target_model_update_frequency == 0:
+            logging.info(f'Updating target model weights based on epoch update frequency: {self._target_model_update_frequency}')
             self._agent.update_target_weights()
+
+        if (epoch_index + 1) % self._model_save_frequency == 0:
+            logging.info(f'Saving model based on epoch update frequency: {self._model_save_frequency}')
+            self._agent.save_checkpoint(self._checkpoint_directory, epoch_index=epoch_index)
+
+        logging.info(f'Finished training epoch: {epoch_index}, total_episodes: {self._total_episodes}, wall_time: {wall_time}')
 
 
     def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
+        start_time = time()
         current_state = self._env.reset()
 
         # Initialize a sub-frame queue to handle overlapping consecutive frames
@@ -109,8 +119,9 @@ class Experiment:
             self._agent.replay_memory.add_transition(current_state_subframes, self._agent.action_space.index(action), reward, next_state_subframes, done)
 
             if done or (episodic_step_index + 1) >= max_steps:
-                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=self._total_episodes)
+                wall_time = time() - start_time
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, episode_wall_time=wall_time), step=self._total_episodes)
                 break
 
             episodic_step_index += 1
@@ -121,6 +132,7 @@ class Experiment:
         
 
     def run_episode_v1(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
+        start_time = time()
         current_state = normalize_state(self._env.reset())
         total_episodic_reward = 0.
         episodic_step_index = 0
@@ -143,8 +155,9 @@ class Experiment:
             current_state = next_state
 
             if done or (episodic_step_index + 1) >= max_steps:
-                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}), terminated={done},  steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
-                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1), step=self._total_episodes)
+                wall_time = time() - start_time
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
+                self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, episode_wall_time=wall_time), step=self._total_episodes)
                 break
 
             episodic_step_index += 1
