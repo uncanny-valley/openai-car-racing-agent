@@ -2,6 +2,7 @@ import gym
 import logging
 import numpy as np
 import numpy.typing as npt
+import sys
 from time import time
 from typing import Tuple
 
@@ -32,6 +33,8 @@ class Experiment:
         self._model_test_frequency = model_test_frequency
         self._target_model_update_by_episodes = target_model_update_by_episodes
         self._checkpoint_directory = checkpoint_directory
+
+        self._mem_threshold = 0.95
 
 
     def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
@@ -89,7 +92,14 @@ class Experiment:
             self._agent.save_checkpoint(self._checkpoint_directory, epoch_index=epoch_index)
 
         logging.info(f'Finished training epoch: {epoch_index}, total_episodes: {self._total_episodes}, wall_time: {wall_time}')
-        log_virtual_memory_stats()
+        percent_used = log_virtual_memory_stats()
+        if percent_used > self._mem_threshold:
+            # If we having save a model already on this epoch, save it now
+            if (epoch_index + 1) % self._model_save_frequency != 0:
+                self._agent.save_checkpoint(self._checkpoint_directory, epoch_index=epoch_index)
+
+            logging.info(f'Agent process exceeded memory usage threshold of {self._mem_threshold}. Ended at epoch {epoch_index}, completing {self._total_episodes} total episodes. Exiting...')
+            sys.exit(1)
 
 
     def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
