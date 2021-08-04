@@ -169,6 +169,8 @@ def main():
     parser.add_argument('--update-by-episodes', action='store_true', help='Whether the specified update frequency is in episodes rather than total frames')
     parser.add_argument('--initial-epoch', type=int, default=0, help='The starting epoch')
     parser.add_argument('--initial-episode', type=int, default=0, help='The starting episode if we are running an existing model')
+    parser.add_argument('--nu', type=int, default=-1, help='The maximum number of consecutive negative rewards received before exiting the episode')
+    parser.add_argument('--nu-starting-frame', type=int, default=50, help='The number of frames that must complete before considering nu in early terminating the episode')
     args = parser.parse_args()
 
     # Default hyperparameters
@@ -178,6 +180,8 @@ def main():
         'epsilon_min': args.epsilon_min,
         'epsilon_decay': args.epsilon_decay,
         'rng': args.rng,
+        'nu': args.nu,
+        'nu_starting_frame': args.nu_starting_frame,
         'num_epochs': args.num_epochs,
         'steps_per_epoch': args.steps_per_epoch,
         'replay_buffer_size': args.replay_buffer_size,
@@ -215,7 +219,8 @@ def main():
     experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length,
                             num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch, target_model_update_frequency=args.update_frequency,
                             initial_epoch=args.initial_epoch, initial_episode=args.initial_episode, model_test_frequency=args.test_frequency,
-                            model_save_frequency=args.save_frequency, target_model_update_by_episodes=args.update_by_episodes, checkpoint_directory=hyperparameters['checkpoint_directory'])
+                            model_save_frequency=args.save_frequency, target_model_update_by_episodes=args.update_by_episodes, checkpoint_directory=hyperparameters['checkpoint_directory'],
+                            nu=args.nu, nu_starting_frame=args.nu_starting_frame)
     experiment.run()
 
     env.close()
