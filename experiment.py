@@ -7,6 +7,7 @@ from typing import Tuple
 
 from agent import Agent
 from preprocessing import SubframeQueue, normalize_state
+from util import log_memory_usage_summary
 
 
 class Experiment:
@@ -88,6 +89,7 @@ class Experiment:
             self._agent.save_checkpoint(self._checkpoint_directory, epoch_index=epoch_index)
 
         logging.info(f'Finished training epoch: {epoch_index}, total_episodes: {self._total_episodes}, wall_time: {wall_time}')
+        log_memory_usage_summary()
 
 
     def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int]:
