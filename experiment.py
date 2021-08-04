@@ -36,7 +36,7 @@ class Experiment:
         self._target_model_update_by_episodes = target_model_update_by_episodes
         self._checkpoint_directory = checkpoint_directory
 
-        self._mem_threshold = 0.95
+        self._mem_threshold = 95.
 
 
     def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
@@ -90,7 +90,7 @@ class Experiment:
         epoch_logs = dict(num_episodes_per_epoch=episode_index + 1, total_reward=total_reward, mean_episodic_reward_in_epoch=mean_episodic_reward, epoch_wall_time=wall_time)
 
         if self._nu > 0:
-            epoch_logs['num_episodes_early_terminated'] = num_episodes_early_terminated
+            epoch_logs['early_termination_rate'] = num_episodes_early_terminated / (episode_index + 1)
 
         self._agent.log(values=epoch_logs, step=epoch_index)
 
@@ -136,7 +136,7 @@ class Experiment:
 
             total_episodic_reward += reward
 
-            if (episode_step_index + 1) >= self._nu_starting_frame and reward < 0:
+            if (episodic_step_index + 1) >= self._nu_starting_frame and reward < 0:
                 num_consecutive_negative_rewards += 1
             else:
                 num_consecutive_negative_rewards = 0
@@ -147,9 +147,10 @@ class Experiment:
             # Store transition (s, a, r, s', done) in experience replay memory
             self._agent.replay_memory.add_transition(current_state_subframes, self._agent.action_space.index(action), reward, next_state_subframes, done)
 
-            if done or (episodic_step_index + 1) >= max_steps or (self._nu > 0 and num_consecutive_negative_rewards >= self._nu):
+            early_terminated_due_to_excessive_negative_reward = self._nu > 0 and num_consecutive_negative_rewards >= self._nu
+            if done or (episodic_step_index + 1) >= max_steps or early_terminated_due_to_excessive_negative_reward:
                 wall_time = time() - start_time
-                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, completed={done}, early_terminated={early_terminated_due_to_excessive_negative_reward}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
                 self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, episode_wall_time=wall_time), step=self._total_episodes)
                 break
 
@@ -177,7 +178,7 @@ class Experiment:
 
             total_episodic_reward += reward
 
-            if (episode_step_index + 1) >= self._nu_starting_frame and reward < 0:
+            if (episodic_step_index + 1) >= self._nu_starting_frame and reward < 0:
                 num_consecutive_negative_rewards += 1
             else:
                 num_consecutive_negative_rewards = 0
@@ -189,9 +190,10 @@ class Experiment:
 
             current_state = next_state
 
-            if done or (episodic_step_index + 1) >= max_steps or (self._nu > 0 and num_consecutive_negative_rewards >= self._nu):
+            early_terminated_due_to_excessive_negative_reward = self._nu > 0 and num_consecutive_negative_rewards >= self._nu
+            if done or (episodic_step_index + 1) >= max_steps or early_terminated_due_to_excessive_negative_reward:
                 wall_time = time() - start_time
-                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, terminated={done}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
+                logging.info(f'Agent={self._agent.name}, Epoch={epoch_index}, Episode=(index={episode_index}, total_episodes={self._total_episodes}, total_episodic_reward={total_episodic_reward}, epsilon={self._agent._epsilon}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, completed={done}, early_terminated={early_terminated_due_to_excessive_negative_reward}, steps_remaining_in_epoch={max_steps - (episodic_step_index + 1)})')
                 self._agent.log(values=dict(total_episodic_reward=total_episodic_reward, steps_per_episode=episodic_step_index + 1, episode_wall_time=wall_time), step=self._total_episodes)
                 break
 
