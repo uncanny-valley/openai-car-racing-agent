@@ -9,4 +9,4 @@ def log_virtual_memory_stats():
     available = bytes2human(mem_usage.available)
     percent_used = mem_usage.percent
     used = bytes2human(mem_usage.used)
-    logging.info(f'Memory usage: total={total}, available={available}, percent_used={percent_used}%, used={}
+    logging.info(f'Memory usage: total={total}, available={available}, percent_used={percent_used}%, used={used}')
