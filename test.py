@@ -33,6 +33,7 @@ def main():
 
     # Default hyperparameters
     hyperparameters = {
+        'initial_epsilon': args.epsilon,
         'model': args.model,
         'rng': args.rng,
         'discount_factor': args.discount_factor,
@@ -58,8 +59,8 @@ def main():
         agent = CarRacingV1Agent(env=env, **hyperparameters)
 
     agent.load_model(args.model)
-    simul = Simulation(env=env, env_version=args.env, agent=agent, epsilon=args.epsilon, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length, num_episodes=args.num_episodes)
-    simul.run()
+    simul = Simulation(env=env, env_version=args.env, agent=agent, epsilon=args.epsilon, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length)
+    simul.run(num_episodes=args.num_episodes)
 
     env.close()
 

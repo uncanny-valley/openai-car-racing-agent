@@ -12,7 +12,7 @@ from util import log_virtual_memory_stats
 
 
 class Simulation:
-    def __init__(self, env: gym.Env, env_version: str, agent: Agent, epsilon: float, frames_to_skip: int, phi_length: int, render: bool, num_episodes: int):
+    def __init__(self, env: gym.Env, env_version: str, agent: Agent, epsilon: float, frames_to_skip: int, phi_length: int, render: bool):
         self._agent = agent
         self._env   = env
         self._env_version = env_version 
@@ -21,6 +21,7 @@ class Simulation:
         self._frames_to_skip = frames_to_skip
         self._phi_length = phi_length
         self._epsilon = epsilon
+
 
     def run(self, num_episodes: int=100):
         start_time = time()
@@ -77,8 +78,10 @@ class Simulation:
 
             if done:
                 wall_time = time() - start_time
-                logging.info(f'Agent={self._agent.name}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, completed={done}')
+                logging.info(f'Agent={self._agent.name}, episode_steps={episodic_step_index + 1}, total_episodic_reward={total_episodic_reward}, wall_time={wall_time}, completed={done}')
                 break
+        
+            episodic_step_index += 1
 
         return total_episodic_reward
 

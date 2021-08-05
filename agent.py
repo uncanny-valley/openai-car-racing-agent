@@ -28,13 +28,13 @@ class Agent:
 
         if not testing:
             self._discount_factor      = kwargs.get('discount_factor')
-            self._epsilon              = kwargs.get('initial_epsilon')
             self._epsilon_min          = kwargs.get('epsilon_min')
             self._epsilon_decay        = kwargs.get('epsilon_decay')
             self._minibatch_size       = kwargs.get('minibatch_size')
             self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
             self._training_losses_in_epoch = []
 
+        self._epsilon = kwargs.get('initial_epsilon')
         self._network = self.build_network(**kwargs)
 
         # Using an existing model
