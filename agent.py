@@ -21,17 +21,21 @@ from network import DeepQNet
 
 
 class Agent:
-    def __init__(self, env: gym.Env, **kwargs):
+    def __init__(self, env: gym.Env, testing: bool=False, **kwargs):
         self._env = env
         self._rng = np.random.RandomState(kwargs.get('rng'))
+        self._testing = testing
 
-        self._discount_factor      = kwargs.get('discount_factor')
-        self._epsilon              = kwargs.get('initial_epsilon')
-        self._epsilon_min          = kwargs.get('epsilon_min')
-        self._epsilon_decay        = kwargs.get('epsilon_decay')
-        self._minibatch_size       = kwargs.get('minibatch_size')
-        self._network              = self.build_network(**kwargs)
-        self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
+        if not testing:
+            self._discount_factor      = kwargs.get('discount_factor')
+            self._epsilon              = kwargs.get('initial_epsilon')
+            self._epsilon_min          = kwargs.get('epsilon_min')
+            self._epsilon_decay        = kwargs.get('epsilon_decay')
+            self._minibatch_size       = kwargs.get('minibatch_size')
+            self.replay_memory         = ExperienceReplay(size=kwargs.get('replay_memory_size'), batch_shape=env.observation_space.shape)
+            self._training_losses_in_epoch = []
+
+        self._network = self.build_network(**kwargs)
 
         # Using an existing model
         model_path = kwargs.get('model')
@@ -49,8 +53,6 @@ class Agent:
 
         self.log_dir               = os.path.join(kwargs.get('log_directory'), self.name)
         self._train_summary_writer = tf.summary.create_file_writer(self.log_dir)
-
-        self._training_losses_in_epoch = []
 
     def build_network(self):
         raise NotImplementedError()
@@ -110,6 +112,9 @@ class CarRacingV1Agent(Agent):
             return self._network.predict_action(state)
 
     def learn(self):
+        if self._testing:
+            raise NotImplementedError('Class was instantiated with testing mode enabled and thus was not supplied with parameters to train the model')
+
         batch = self.replay_memory.sample_minibatch(batch_size=self._minibatch_size)
         state_samples, action_samples, reward_samples, terminal_samples, next_state_samples = batch
 
@@ -149,6 +154,9 @@ class CarRacingV0Agent(Agent):
         return self.action_space[action_index]
 
     def learn(self):
+        if self._testing:
+            raise NotImplementedError('Class was instantiated with testing mode enabled and thus was not supplied with parameters to train the model')
+
         batch = self.replay_memory.sample_minibatch(batch_size=self._minibatch_size)
         state_samples, action_samples, reward_samples, terminal_samples, next_state_samples = batch
 

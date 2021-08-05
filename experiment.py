@@ -11,6 +11,79 @@ from preprocessing import SubframeQueue, normalize_state
 from util import log_virtual_memory_stats
 
 
+class Simulation:
+    def __init__(self, env: gym.Env, env_version: str, agent: Agent, epsilon: float, frames_to_skip: int, phi_length: int, render: bool, num_episodes: int):
+        self._agent = agent
+        self._env   = env
+        self._env_version = env_version 
+
+        self._render = render
+        self._frames_to_skip = frames_to_skip
+        self._phi_length = phi_length
+        self._epsilon = epsilon
+
+    def run(self, num_episodes: int=100):
+        start_time = time()
+        logging.info(f'Starting testing for {num_episodes} episodes...')
+
+        episodic_rewards = []
+
+        for episode_index in range(num_episodes):
+            if self._env_version == 0:
+                total_episodic_reward = self.run_episode(episode_index)
+                episodic_rewards.append(total_episodic_reward)
+                
+        mean_episodic_reward = np.mean(episodic_rewards)
+        wall_time = time() - start_time
+        logging.info(f'Finished testing for {num_episodes} episodes. mean_episodic_reward={mean_episodic_reward}, wall_time={wall_time}')
+
+
+    def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
+        reward = 0
+        for _ in range(self._frames_to_skip):
+            next_state, r, done, _ = self._env.step(action)
+            if done:
+                return next_state, reward + r, done
+            else:
+                reward += r
+
+        return next_state, reward, done
+
+
+    def run_episode(self, episode_index: int):
+        start_time = time()
+        current_state = self._env.reset()
+
+        # Initialize a sub-frame queue to handle overlapping consecutive frames
+        subframe_queue = SubframeQueue(subframes=[current_state] * self._phi_length, size=self._phi_length)
+
+        total_episodic_reward = 0.
+        episodic_step_index = 0
+
+        while True:
+            if self._render:
+                self._env.render()
+
+            # Agent takes an action, a, from state and observes reward and next state s'
+            current_state_subframes = subframe_queue.to_numpy()
+            action = self._agent.act(current_state_subframes, epsilon_override=self._epsilon)
+
+            next_state, reward, done = self.step(action)
+
+            total_episodic_reward += reward
+            
+            subframe_queue.add(next_state)
+            next_state_subframes = subframe_queue.to_numpy()
+
+            if done:
+                wall_time = time() - start_time
+                logging.info(f'Agent={self._agent.name}, episode_steps={episodic_step_index + 1}, wall_time={wall_time}, completed={done}')
+                break
+
+        return total_episodic_reward
+
+
+
 class Experiment:
     def __init__(self, env: gym.Env, env_version: str, agent: Agent, render:bool, num_epochs: int, num_steps_per_epoch: int,
                  frames_to_skip: int, phi_length: int, target_model_update_frequency: int, model_save_frequency: int,
@@ -113,7 +186,7 @@ class Experiment:
             sys.exit(1)
 
 
-    def run_episode(self, epoch_index: int, episode_index: int, max_steps:int) -> Tuple[np.float64, int, bool]:
+    def run_episode(self, epoch_index: int, episode_index: int, max_steps: int) -> Tuple[np.float64, int, bool]:
         start_time = time()
         current_state = self._env.reset()
 
