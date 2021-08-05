@@ -22,7 +22,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--env', type=int, default=1, help='Either CarRacing-v0 or CarRacing-v1 OpenAI gym environment')
     parser.add_argument('--rng', type=int, default=0, help='Random seed to reproduce agent stochasticity')
-    parser.add_argument('-n', '--num-episodes', default=100, help='Number of episodes to simulate with agent')
+    parser.add_argument('-n', '--num-episodes', type=int, default=100, help='Number of episodes to simulate with agent')
     parser.add_argument('-m', '--model', type=str, help='Path to load an existing model', required=True)
     parser.add_argument('-r', '--render', action='store_true', help='Whether to render the animated display')
     parser.add_argument('-e', '--epsilon', type=np.float32, default=0.1, help='Rate of exploration when testing the agent')

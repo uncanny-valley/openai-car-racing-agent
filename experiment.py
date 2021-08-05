@@ -1,3 +1,4 @@
+import datetime
 import gym
 import logging
 import numpy as np
@@ -37,7 +38,11 @@ class Simulation:
         mean_episodic_reward = np.mean(episodic_rewards)
         wall_time = time() - start_time
         logging.info(f'Finished testing for {num_episodes} episodes. mean_episodic_reward={mean_episodic_reward}, wall_time={wall_time}')
-
+        
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+        result_filename = f'{self._agent.name}-result-{timestamp}.txt'
+        with open(result_filename, 'w') as f:
+            f.write('\n'.join(episodic_rewards))
 
     def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
         reward = 0
