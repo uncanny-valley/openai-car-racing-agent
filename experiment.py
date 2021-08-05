@@ -42,7 +42,8 @@ class Simulation:
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
         result_filename = f'{self._agent.name}-result-{timestamp}.txt'
         with open(result_filename, 'w') as f:
-            f.write('\n'.join(episodic_rewards))
+            rewards = ['%.8f' % r for r in episodic_rewards]
+            f.write('\n'.join(rewards))
 
     def step(self, action: int) -> Tuple[npt.NDArray[np.float64], np.float64, bool]:
         reward = 0
