@@ -43,6 +43,7 @@ def generate_dataset(env_version: int, num_observations: int) -> npt.NDArray[np.
         )
         dataset = np.empty((num_observations, 96, 96, 4))
 
+    print(dataset.shape)
     i = 0
     while i < num_observations:
         observation = env.reset()
@@ -63,10 +64,11 @@ def generate_dataset(env_version: int, num_observations: int) -> npt.NDArray[np.
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Generate a dataset of environment state frames')
-    parser.add_argument('-n', '--num-observations', default=100, help='Number of observation frames to generate')
-    parser.add_argument('-e', '--env', default=0, help='The environment version (CarRacing-v0 or CarRacing-v1)')
-    parser.add_argument('-o', '--output-file', required=True, help='Name of the .npy file to output the dataset')
+    parser.add_argument('-n', '--num-observations', type=int, default=100, help='Number of observation frames to generate')
+    parser.add_argument('-e', '--env', default=0, type=int, help='The environment version (CarRacing-v0 or CarRacing-v1)')
+    parser.add_argument('-o', '--output-file', type=str, required=True, help='Name of the .npy file to output the dataset')
     args = parser.parse_args()
 
     dataset = generate_dataset(env_version=args.env, num_observations=args.num_observations)
+    print(args.env, dataset.shape)
     np.save(args.output_file, dataset)
