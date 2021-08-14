@@ -3,7 +3,6 @@ sys.path.append("..")
 
 from argparse import ArgumentParser
 import gym
-from gym.envs.box2d import CarRacingV1
 import numpy as np
 import numpy.typing as npt
 import random
@@ -33,6 +32,7 @@ def generate_dataset(env_version: int, num_observations: int) -> npt.NDArray[np.
         env = gym.make('CarRacing-v0')
         dataset = np.empty((num_observations, 96, 96, 3))
     else:
+        from gym.envs.box2d import CarRacingV1
         env = CarRacingV1(
             grayscale=1,
             show_info_panel=0,
@@ -43,16 +43,18 @@ def generate_dataset(env_version: int, num_observations: int) -> npt.NDArray[np.
         )
         dataset = np.empty((num_observations, 96, 96, 4))
 
-    while dataset.shape[0] < num_observations:
+    i = 0
+    while i < num_observations:
         observation = env.reset()
 
         while True:
             action = random_action(env_version, env)
             observation, reward, done, _ = env.step(action)
             observation = np.expand_dims(observation, axis=0)
-            dataset = np.append(dataset, observation, axis=0)
+            dataset[i] = observation
+            i += 1
 
-            if done:
+            if done or i >= num_observations:
                 break
 
     env.close()
