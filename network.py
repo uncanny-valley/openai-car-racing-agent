@@ -38,7 +38,7 @@ class DeepQNet:
         conv2   = Conv2D(filters=12, kernel_size=(4, 4), activation='relu')(pool1)
         pool2   = MaxPooling2D(pool_size=(2, 2))(conv2)
         flatten = Flatten()(pool2)
-        hidden  = Dense(216, activation='relu')(flatten)
+        hidden  = Dense(256, activation='relu')(flatten)
         output  = Dense(output_num, activation='linear')(hidden)
         model   = Model(inputs=visible, outputs=output)
         model.summary()
