@@ -27,7 +27,7 @@ def main():
     parser.add_argument('-e', '--epsilon', type=np.float32, default=1., help='Initial epsilon for the agent')
     parser.add_argument('-s', '--replay-buffer-size', type=int, default=10000, help='The size of the experience replay memory buffer')
     parser.add_argument('-b', '--minibatch-size', type=int, default=128, help='The size of the minibatch that we will use to intermittently train the agent')
-    parser.add_argument('-g', '--discount-factor', type=np.float32, default=0.95, help='How much the agent considers long-term future rewards relative to immediate rewards [0, 1]')
+    parser.add_argument('-g', '--discount-factor', type=np.float32, default=0.99, help='How much the agent considers long-term future rewards relative to immediate rewards [0, 1]')
     parser.add_argument('-l', '--learning-rate', type=np.float32, default=1e-3, help='How sensitive the Q-network weights are to estimated errors during training [0, 1]')
     parser.add_argument('-p', '--phi-length', type=int, default=3, help='The number of game frames to stack together, given that the environment doesn\'t provide this automatically')
     parser.add_argument('--num-frames-to-skip', type=np.int64, default=3, help='Number of frames to skip. For example, if set to 3, wes process every 4th frame')
