@@ -23,6 +23,10 @@ class ExperienceReplay:
     def __len__(self):
         return len(self._memory)
 
+    @memory.setter
+    def memory(self, memory):
+        self._memory = memory
+
     def add_transition(self, state: npt.NDArray[np.float64], action: np.uint8, reward: np.float32, next_state: npt.NDArray[np.float64], is_terminal: bool):
         t = Transition(state, action, reward, next_state, is_terminal)
         self._memory.append(t)

@@ -5,6 +5,7 @@ import ntpath
 import numpy as np
 import numpy.typing as npt
 import os
+import pickle
 import re
 
 from gym.envs.box2d import CarRacing, CarRacingV1
@@ -16,7 +17,6 @@ from tensorflow.keras.layers import Conv2D, Dense, Flatten, Input, MaxPooling2D
 from tensorflow.keras.metrics import Mean
 
 from experience_replay import ExperienceReplay
-
 from network import DeepQNet
 
 
@@ -71,9 +71,15 @@ class Agent:
     def update_target_weights(self):
         self._network.update_target_weights()
 
-    def save_checkpoint(self, checkpoint_directory, epoch_index: int):
-        path = os.path.join(checkpoint_directory, f'{self.name}-epoch-{epoch_index}.h5')
-        self._network.save_model(path)
+    def load_memory(self, path_to_memory_file: str):
+        self.replay_memory.memory = pickle.load(open(path_to_memory_file, 'rb'))
+        
+    def save_checkpoint(self, checkpoint_directory: str, epoch_index: int):
+        model_path = os.path.join(checkpoint_directory, f'{self.name}-epoch-{epoch_index}.h5')
+        memory_path = os.path.join(checkpoint_directory, f'{self.name}-memory.pkl')
+        self._network.save_model(model_path)
+        pickle.dump(self.replay_memory, open(memory_path, 'wb'))
+
 
     def load_model(self, path_to_model: str):
         self._network.load_model(path_to_model)

@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--initial-episode', type=int, default=0, help='The starting episode if we are running an existing model')
     parser.add_argument('--nu', type=int, default=-1, help='The maximum number of consecutive negative rewards received before exiting the episode')
     parser.add_argument('--nu-starting-frame', type=int, default=50, help='The number of frames that must complete before considering nu in early terminating the episode')
+    parser.add_argument('--memory', type=str, help='Path to saved experience replay memory (.pkl)')
     args = parser.parse_args()
 
     # Default hyperparameters
@@ -85,6 +86,11 @@ def main():
 
     if args.model is not None:
         agent.load_model(args.model)
+
+    if args.memory:
+        print(len(agent.replay_memory))
+        agent.load_memory(args.memory)
+        print(len(agent.replay_memory))
 
     experiment = Experiment(env=env, env_version=args.env, agent=agent, render=args.render, frames_to_skip=args.num_frames_to_skip, phi_length=args.phi_length,
                             num_epochs=args.num_epochs, num_steps_per_epoch=args.steps_per_epoch, target_model_update_frequency=args.update_frequency,
