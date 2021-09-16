@@ -78,7 +78,7 @@ class Agent:
         model_path = os.path.join(checkpoint_directory, f'{self.name}-epoch-{epoch_index}.h5')
         memory_path = os.path.join(checkpoint_directory, f'{self.name}-memory.pkl')
         self._network.save_model(model_path)
-        pickle.dump(self.replay_memory, open(memory_path, 'wb'))
+        pickle.dump(self.replay_memory.memory, open(memory_path, 'wb'))
 
 
     def load_model(self, path_to_model: str):
