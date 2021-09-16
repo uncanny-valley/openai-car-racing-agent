@@ -12,7 +12,7 @@ Transition = namedtuple('Transition', field_names=[
     'next_state',
     'is_terminal'])
 
-class ExperienceReplay:
+class ExperienceReplay(object):
     def __init__(self, size: np.int64, batch_shape: Tuple[np.int64]):
         self.max_size = size
         self.batch_shape = batch_shape
