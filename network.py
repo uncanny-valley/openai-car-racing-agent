@@ -32,7 +32,7 @@ class DeepQNet:
         self._model_target.save_weights(path)
 
     def initialize_model(self, input_shape: Tuple, output_num: int) -> Model:
-        kr = tf.keras.regularizers.l2(l2=1e-6)
+        kr = tf.keras.regularizers.L2(l2=1e-6)
         visible = Input(shape=input_shape)
         conv1   = Conv2D(filters=8, kernel_size=(7, 7), strides=3, activation='relu', kernel_regularizer=kr)(visible)
         pool1   = MaxPooling2D(pool_size=(2, 2), strides=2)(conv1)
