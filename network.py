@@ -32,10 +32,11 @@ class DeepQNet:
         self._model_target.save_weights(path)
 
     def initialize_model(self, input_shape: Tuple, output_num: int) -> Model:
+        kr = tf.keras.regularizers.l2(l2=1e-6)
         visible = Input(shape=input_shape)
-        conv1   = Conv2D(filters=8, kernel_size=(7, 7), strides=3, activation='relu')(visible)
+        conv1   = Conv2D(filters=8, kernel_size=(7, 7), strides=3, activation='relu', kernel_regularizer=kr)(visible)
         pool1   = MaxPooling2D(pool_size=(2, 2), strides=2)(conv1)
-        conv2   = Conv2D(filters=16, kernel_size=(3, 3), activation='relu')(pool1)
+        conv2   = Conv2D(filters=16, kernel_size=(3, 3), activation='relu', kernel_regularizer=kr)(pool1)
         pool2   = MaxPooling2D(pool_size=(2, 2), strides=2)(conv2)
         flatten = Flatten()(pool2)
         hidden  = Dense(256, activation='relu')(flatten)
