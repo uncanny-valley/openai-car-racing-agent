@@ -8,8 +8,9 @@ import os
 import pickle
 import re
 
+from collections import deque
 from gym.envs.box2d import CarRacing, CarRacingV1
-from random import randrange
+from random import randrange, sample
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard
@@ -78,7 +79,10 @@ class Agent:
         model_path = os.path.join(checkpoint_directory, f'{self.name}-epoch-{epoch_index}.h5')
         memory_path = os.path.join(checkpoint_directory, 'memory.pkl')
         self._network.save_model(model_path)
-        pickle.dump(self.replay_memory.memory, open(memory_path, 'wb'))
+        
+        # Save a portion of replay memory to avoid cold-starting upon restarting agent training
+        with open(memory_path, 'wb') as f:
+            pickle.dump(deque(sample(self.replay_memory.memory, k=self._minibatch_size * 3)), f)
 
 
     def load_model(self, path_to_model: str):
